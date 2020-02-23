@@ -9,7 +9,7 @@
 *
 */
 
-document.write(" <script language=\"javascript\" src=\"crypto.js\" > <\/script>"); 
+document.write(" <script language=\"javascript\" src=\"https://raw.githubusercontent.com/shinelinxx/fateadm/master/crypto.js\" > <\/script>"); 
 
 /*
 *	Predict     	识别请求
