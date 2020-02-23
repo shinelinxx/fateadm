@@ -1,0 +1,127 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TestFateaRequest</title>
+</head>
+<body>
+<script type="text/javascript" src="fateadm.js"></script>
+<script type="text/javascript">
+	function User(){
+		return {
+		pd_id 			: 100000,  		// 用户中心页可以查询到pd信息
+		pd_key			: "123456",
+		app_id 			: 1000001,		// 开发者分成用的账号，在开发者中心可以查询到
+		app_key 		: "123456",
+		// 具体类型可以查看官方网站的价格页选择具体的类型，不清楚类型的，可以咨询客服
+		pred_type		: 30400,
+		};
+	}
+	function SelectFile(){
+		var pd 			= User();
+		var pd_id 			= pd.pd_id;
+		var pd_key			= pd.pd_key;
+		var app_id 			= pd.app_id;
+		var app_key 		= pd.app_key;
+		var pred_type		= pd.pred_type;
+
+		var form = document.forms["fileform"]; 
+		//console.log("selectFile: " + form["file"].files);
+ 		if (form["file"].files.length > 0) { 
+ 			var file = form["file"].files[0];
+			ReadFile(file, function(img_data){
+				/*
+			    // 识别接口，只返回识别结果
+			    PredictExtend(file,app_id,app_key,pd_id,pd_key,pred_type,function (result) {
+					console.log("识别结果" + result);
+                });
+                */
+			    // 识别接口，返回详细信息
+			    // 多网站类型时，需要增加src_url参数，具体请参考api文档: http://docs.fateadm.com/web/#/1?page_id=6
+				Predict(img_data, app_id, app_key, pd_id, pd_key, pred_type, function( ret_code, pred_data, result){
+						console.log("正常执行识别，识别的ret_code为: " + ret_code );
+						//console.log("正常执行识别，识别的结果为: " + pred_data.RspData );
+						console.log("正常执行识别，识别result为: " + result['result'] );
+						var r_flag 	= true;
+						//console.log("rflag: " + r_flag);
+						if( r_flag === false){
+				            //识别的结果如果与预期不符，可以调用这个接口将预期不符的订单退款
+				            //退款仅在正常识别出结果后，无法通过网站验证的情况，请勿非法或者滥用，否则可能进行封号处理
+							Justice(pd_id, pd_key, rsp_data.RequestId, function(jret_code){
+								console.log("退款结果: " + jret_code);
+							});
+						}
+					// 其余错误码，详见http://docs.fateadm.com/index.php?s=/1&page_id=5
+				});
+			});
+		}
+	}
+
+	function Balance(){
+		var pd 			= User();
+		var pd_id 			= pd.pd_id;
+		var pd_key			= pd.pd_key;
+		// 查询余额接口，只返回用户余额
+		QueryBalanceExtend(pd_id,pd_key,function (cust_val) {
+			console.log("用户余额：" + cust_val);
+        });
+		// 查询余额
+		QueryBalance( pd_id, pd_key, function(ret_code, rsp_data){
+			if( ret_code == 0){
+				//查询成功，更新数据
+				document.getElementById("val").value=rsp_data.cust_val;
+			}
+		});
+	}
+	function RTT(){
+		var pd 			= User();
+		var pd_id 			= pd.pd_id;
+		var pd_key			= pd.pd_key;
+		var app_id 			= pd.app_id;
+		var app_key 		= pd.app_key;
+		var pred_type		= pd.pred_type;
+		var tm 				= new Date();
+		QueryRTT(app_id, app_key, pd_id, pd_key, pred_type, function(ret_code){
+			ltm 			= new Date();
+			console.log("返回状态码: ", ret_code);
+			//查询成功，更新数据
+			document.getElementById("rtt").value=ltm-tm;
+		})
+	}
+    function ChargeBalc(){
+		var pd 			= User();
+		var pd_id 			= pd.pd_id;
+		var pd_key			= pd.pd_key;
+        cardid              = document.getElementById("cid").value;
+        cardkey             = document.getElementById("ckey").value;
+        console.log("cardid: " + cardid +" cardkey: " + cardkey);
+        Charge( pd_id, pd_key, cardid, cardkey, function( ret_code){
+                if(ret_code == 0){
+                    console.log("充值成功");
+                }else{
+                	console.log("充值失败，错误: "+ ret_code );
+                }
+         })
+    }
+</script>
+	<form name= "fileform" id="fileform"  method="post" enctype="multipart/form-data"  action="javascript:SelectFile();">
+		<input type='file' name="file" />
+		<input type="submit" value="识别"  />
+	</form>
+	<form name="bala" id = "bala" method="post" enctype="multipart/form-data"  action="javascript:Balance();">
+		余额:<input type="text" name="val" id="val" value="0" >积分
+		<input type="submit" value="查询"> </input>
+	</form>
+	<form name="qrtt" id = "qrtt" method="post" enctype="multipart/form-data"  action="javascript:RTT();">
+		延迟:<input type="text" name="rtt" id="rtt" value="0" >ms
+		<input type="submit" value="查询"> </input>
+	</form>
+    <form name="chg" id="chg" method="post" enctype="multipart/form-data"  action="javascript:ChargeBalc();">
+        卡号:<input type="text" name="cid" id="cid" value="">
+        卡密:<input type="text" name="ckey" id="ckey" value="">
+		<input type="submit" value="充值"> </input>
+    </form>
+</body>
+</html>
+
+
